@@ -1,0 +1,1 @@
+pip install fitz tiktoken openai pymupdf

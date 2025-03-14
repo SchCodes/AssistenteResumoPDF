@@ -14,12 +14,12 @@ except FileNotFoundError:
 
 # Configurações
 DEEPSEEK_API_KEY = api_key  # Substitua pela sua chave da API
-CAMINHO_PDF = "edital_federal_tecnologia.pdf"  # Caminho do arquivo PDF
+CAMINHO_PDF = "tccUsoRedesNeuraisEucalipto.pdf"  # Caminho do arquivo PDF
 BASE_NOME_PDF = os.path.splitext(CAMINHO_PDF)[0]
 CAMINHO_JSON_RESUMOS = f"resumos_parciais{CAMINHO_PDF}.json"
 CAMINHO_JSON_TEXTO = f"texto_extraido{CAMINHO_PDF}.json"  # Novo arquivo para o texto extraído
 MODELO_DEEPSEEK = "deepseek-reasoner" # deepseek-reasoner (R1) ou deepseek-chat (V3) 
-LIMITE_TOKENS = 60000  # Margem de segurança abaixo de 65.536 tokens
+LIMITE_TOKENS = 125000  # Margem de segurança abaixo de 65.536 tokens
 MAX_NIVEIS = 3  # Níveis máximos de resumo recursivo
 
 
@@ -176,10 +176,11 @@ def gerar_resumo(texto):
         model=MODELO_DEEPSEEK,
         messages=[
             {"role": "system", "content": "Você é um especialista em resumos técnicos."},
-            {"role": "user", "content": f"Resuma este texto, o mínimo de palavras deve ser 1000\nTexto: {texto}"}
+            {"role": "system", "content": "O mínimo de palavras deve ser 1000."},
+            {"role": "user", "content": f"Resuma este texto, preservando os assuntos principais\nTexto: {texto}"}
         ],
-        temperature=0,
-        max_tokens=8000
+        temperature=0.2,
+        #max_tokens=8160
     )
     return resposta.choices[0].message.content
 
@@ -188,11 +189,11 @@ def gerar_resposta(texto):
     resposta = deepseek.chat.completions.create(
         model=MODELO_DEEPSEEK,
         messages=[
-            {"role": "system", "content": "Gerar resposta estruturada em markdown com:"},
-            {"role": "user", "content": f"Com base neste documento {texto}, crie um resumo detalhado com:\n# Objetivo\n# Requisitos\n# Prazos\n# Etapas\n# Entre outras informações que sejam relevantes\nMínimo de palavras deve ser 4000\nTexto: {texto}\nCorrija a formatação do Markdown removendo os espaços extras após os títulos e substituindo os asteriscos por hashtags para os títulos."}
+            {"role": "system", "content": "Gerar resposta estruturada em markdown. Certifique-se de que o texto tenha pelo menos 1000 palavras e que a formatação esteja correta."},
+            {"role": "user", "content": f"Com base neste documento, CRIE a estrura para um pré projeto com uma ideia semelhante a apresentada no texto, faça o levantamento de requisitos, defina as etapas e os recursos necesseários para a implementação.\nTexto: {texto}"},
         ],
-        temperature=0.1,
-        max_tokens=8000
+        temperature=0.2,
+        #max_tokens=8160
     )
     return resposta.choices[0].message.content
 
@@ -203,7 +204,7 @@ def salvar_resposta(resposta):
     caminho_markdown = f"{nome_base}.md"
 
     with open(caminho_markdown, "w", encoding="utf-8") as md:
-        md.write(f"# Resumo do Edital: {os.path.basename(nome_base)}\n\n")
+        md.write(f"# Resumo do Documento: {os.path.basename(nome_base)}\n\n")
         md.write(resposta)
     print(f"Resposta salva em {caminho_markdown}")
 
